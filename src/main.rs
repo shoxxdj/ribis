@@ -6,7 +6,8 @@ use std::io;
 use std::io::Write;
 use std::path::Path;
 mod create;
-use sqlite;
+mod list;
+use rusqlite::{Connection, Result};
 use yaml_rust2::{Yaml, YamlEmitter, YamlLoader};
 fn main() -> io::Result<()> {
     //First time
@@ -100,7 +101,7 @@ fn main() -> io::Result<()> {
     let expanded_path_db_file_location = shellexpand::tilde(&db_file_location);
     let db_path = Path::new(expanded_path_db_file_location.as_ref());
 
-    let conn = sqlite::open(db_path).unwrap();
+    let conn = Connection::open(db_path).unwrap();
     let query = " CREATE TABLE IF NOT EXISTS ribis (
             name VARCHAR(255) NOT NULL,
             private_key_path VARCHAR(255) NOT NULL,
@@ -108,7 +109,7 @@ fn main() -> io::Result<()> {
             status VARCHAR(10) NOT NULL,
             mount_point VARCHAR(255) NOT NULL
         ); ";
-    conn.execute(query).unwrap();
+    conn.execute(query, ()).unwrap();
 
     let matches = Command::new("my_program")
         .version("1.0")
@@ -147,7 +148,9 @@ fn main() -> io::Result<()> {
             let name = name.expect("name must be defined");
             create::create(name);
         }
-        "list" => println!("Vous avez choisi l'action list"),
+        "list" => {
+            list::list();
+        }
         "lock" => println!("Vous avez choisi l'action lock"),
         "unlock" => println!("Vous avez choisi l'action unlock"),
         "delete" => println!("Vous avez choisi l'action delete"),
